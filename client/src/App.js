@@ -62,24 +62,23 @@ const App = () => {
     
     if (isMealInCart) {
       const updatedCart = cart.map((item) => {
-        if (item.id === meal.id && meal.drink) {
-          // Check if the drink is already in the cart
-          const isDrinkInCart = cart.some((cartItem) => cartItem.id === meal.drink.id);
-          if (!isDrinkInCart) {
-            return [item, meal.drink];
-          }
+        if (item.id === meal.id && meal.drink && !cart.some((cartItem) => cartItem.id === meal.drink.id)) {
+          // If the meal is already in the cart and has a drink, add the drink to the cart if not present
+          return [item, meal.drink];
         }
         return item;
       }).flat();
-    
+  
       setCart(updatedCart);
       calculateTotalPrice(updatedCart);
     } else {
-      // If the meal is not in the cart, add it
-      setCart([...cart, meal]);
-      calculateTotalPrice([...cart, meal]);
+      // If the meal is not in the cart, add it along with the drink if present
+      const updatedCart = meal.drink ? [meal, meal.drink] : [meal];
+      setCart((prevCart) => [...prevCart, ...updatedCart]);
+      calculateTotalPrice([...cart, ...updatedCart]);
     }
   };
+  
   
 
 
@@ -99,8 +98,8 @@ const App = () => {
       if (!item.hasOwnProperty('drink')) {
         // If the item doesn't have a drink, it's a meal
         const isDoublePrice = selectedMealIds[item.id];
-        totalPrice += isDoublePrice ? item.price * 2 : item.price;
-        selectedMealIds[item.id] = isDoublePrice ? false : true;
+        totalPrice += isDoublePrice ? item.price : item.price * 2;
+        selectedMealIds[item.id] = !isDoublePrice;
       } else {
         // If the item has a drink, add its price
         totalPrice += item.price;
@@ -111,14 +110,20 @@ const App = () => {
   };
   
   
+  
   const handleSelectPerson = (personId, mealId, drinkId = null) => {
     const updatedPeople = people.map((person) => {
       if (person.id === personId) {
-        // Deselect the meal and drink if the person is already selected for the meal
-        if (person.selectedMealId === mealId) {
-          return { ...person, selectedMealId: null, selectedDrinkId: null };
+        const personSelectedMeal = person.selectedMealId;
+        const personSelectedDrink = person.selectedDrinkId;
+  
+        if (personSelectedMeal !== mealId) {
+          // If the selected meal and drink are not from the same card, reset the selected drink
+          return { ...person, selectedMealId: mealId, selectedDrinkId: null };
+        } else if (personSelectedDrink !== drinkId) {
+          // If a different drink from the same card is selected, update the selected drink
+          return { ...person, selectedDrinkId: drinkId };
         }
-        return { ...person, selectedMealId: mealId, selectedDrinkId: drinkId };
       }
       return person;
     });
@@ -256,12 +261,15 @@ const App = () => {
           ))}
         </Grid>
       </div>
+      <div style={{ margin: '20px' }}>
       <Cart
         cart={cart}
         handleRemoveFromCart={handleRemoveFromCart}
         totalPrice={totalPrice}
         handlePlaceOrder={handlePlaceOrder}
       />
+      </div>
+     
 
       <Snackbar
         open={snackbarOpen}
