@@ -26,7 +26,7 @@ const App = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/meals');
+      const response = await axios.get('https://food-order-xx1t.onrender.com/meals');
       setMeals(response.data);
       setFilteredMeals(response.data);
       extractLabels(response.data);
@@ -184,7 +184,7 @@ const App = () => {
       const totalPrice = selectedItems.reduce((acc, item) => acc + item.price, 0);
   
       // Send data to the backend
-      const response = await axios.post('http://localhost:8000/place-order', {
+      const response = await axios.post('https://food-order-xx1t.onrender.com/place-order', {
         selectedItems,
         totalPrice,
         // Add any other necessary data to send to the backend
